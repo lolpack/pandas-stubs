@@ -1,0 +1,13 @@
+# pyrefly.toml
+
+# Let's include everything so commenting out
+project_includes = ["tests", "pandas-stubs"]
+
+site_package_path = [
+  ".venv/lib/python3.12/site-packages/"
+]
+
+[errors]
+# Ignore missing imports
+missing-module-attribute = false
+import-error = false
