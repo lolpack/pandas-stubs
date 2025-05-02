@@ -31,7 +31,8 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from pandas._testing import ensure_clean
+from pandas import Timestamp
+from pandas.api.typing import NAType
 from pandas.core.resample import (
     DatetimeIndexResampler,
     Resampler,
@@ -44,17 +45,17 @@ from typing_extensions import (
 )
 import xarray as xr
 
-from pandas._libs.missing import NAType
-from pandas._libs.tslibs.timestamps import Timestamp
 from pandas._typing import Scalar
 
 from tests import (
     PD_LTE_22,
     TYPE_CHECKING_INVALID_USAGE,
     check,
+    ensure_clean,
     pytest_warns_bounded,
 )
 
+from pandas.io.formats.format import EngFormatter
 from pandas.io.formats.style import Styler
 from pandas.io.parsers import TextFileReader
 
@@ -658,23 +659,218 @@ def test_types_quantile() -> None:
     df.quantile(np.array([0.25, 0.75]))
 
 
-@pytest.mark.parametrize("lower", [None, 5, pd.Series([3, 4])])
-@pytest.mark.parametrize("upper", [None, 15, pd.Series([12, 13])])
-@pytest.mark.parametrize("axis", [None, 0, "index"])
-def test_types_clip(lower, upper, axis) -> None:
-    def is_none_or_numeric(val: Any) -> bool:
-        return val is None or isinstance(val, int | float)
-
+def test_dataframe_clip() -> None:
+    """Test different clipping combinations for dataframe."""
     df = pd.DataFrame(data={"col1": [20, 12], "col2": [3, 14]})
-    uses_array = not (is_none_or_numeric(lower) and is_none_or_numeric(upper))
-    if uses_array and axis is None:
-        with pytest.raises(ValueError):
-            df.clip(lower=lower, upper=upper, axis=axis)
-    else:
-        check(
-            assert_type(df.clip(lower=lower, upper=upper, axis=axis), pd.DataFrame),
-            pd.DataFrame,
-        )
+    if TYPE_CHECKING_INVALID_USAGE:
+        df.clip(lower=pd.Series([4, 5]), upper=None, axis=None)  # type: ignore[call-overload] # pyright: ignore[reportCallIssue, reportArgumentType]
+        df.clip(lower=None, upper=pd.Series([4, 5]), axis=None)  # type: ignore[call-overload] # pyright: ignore[reportCallIssue, reportArgumentType]
+        df.clip(lower=pd.Series([1, 2]), upper=pd.Series([4, 5]), axis=None)  # type: ignore[call-overload] # pyright: ignore[reportCallIssue, reportArgumentType]
+        df.copy().clip(lower=pd.Series([1, 2]), upper=None, axis=None, inplace=True)  # type: ignore[call-overload] # pyright: ignore[reportCallIssue, reportArgumentType]
+        df.copy().clip(lower=None, upper=pd.Series([1, 2]), axis=None, inplace=True)  # type: ignore[call-overload] # pyright: ignore[reportCallIssue, reportArgumentType]
+        df.copy().clip(lower=pd.Series([4, 5]), upper=pd.Series([1, 2]), axis=None, inplace=True)  # type: ignore[call-overload] # pyright: ignore[reportCallIssue, reportArgumentType]
+
+    check(
+        assert_type(df.clip(lower=None, upper=None, axis=None), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=5, upper=None, axis=None), pd.DataFrame), pd.DataFrame
+    )
+    check(
+        assert_type(df.clip(lower=None, upper=15, axis=None), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(
+            df.clip(lower=None, upper=None, axis=None, inplace=True), pd.DataFrame
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=5, upper=None, axis=None, inplace=True), None),
+        type(None),
+    )
+    check(
+        assert_type(df.clip(lower=None, upper=15, axis=None, inplace=True), None),
+        type(None),
+    )
+
+    check(
+        assert_type(df.clip(lower=None, upper=None, axis=0), pd.DataFrame), pd.DataFrame
+    )
+    check(assert_type(df.clip(lower=5, upper=None, axis=0), pd.DataFrame), pd.DataFrame)
+    check(
+        assert_type(df.clip(lower=None, upper=15, axis=0), pd.DataFrame), pd.DataFrame
+    )
+    check(
+        assert_type(df.clip(lower=pd.Series([1, 2]), upper=None, axis=0), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=None, upper=pd.Series([1, 2]), axis=0), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(
+            df.clip(lower=None, upper=None, axis="index", inplace=True), pd.DataFrame
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=5, upper=None, axis="index", inplace=True), None),
+        type(None),
+    )
+    check(
+        assert_type(df.clip(lower=None, upper=15, axis="index", inplace=True), None),
+        type(None),
+    )
+    check(
+        assert_type(
+            df.clip(lower=pd.Series([1, 2]), upper=None, axis="index", inplace=True),
+            None,
+        ),
+        type(None),
+    )
+    check(
+        assert_type(
+            df.clip(lower=None, upper=pd.Series([1, 2]), axis="index", inplace=True),
+            None,
+        ),
+        type(None),
+    )
+    check(
+        assert_type(df.clip(lower=None, upper=None, axis="index"), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=5, upper=None, axis="index"), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=None, upper=15, axis="index"), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(
+            df.clip(lower=pd.Series([1, 2]), upper=None, axis="index"), pd.DataFrame
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(
+            df.clip(lower=None, upper=pd.Series([1, 2]), axis="index"), pd.DataFrame
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(
+            df.clip(lower=None, upper=None, axis=0, inplace=True), pd.DataFrame
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=5, upper=None, axis=0, inplace=True), None),
+        type(None),
+    )
+    check(
+        assert_type(df.clip(lower=None, upper=15, axis=0, inplace=True), None),
+        type(None),
+    )
+
+    # without lower
+    check(assert_type(df.clip(upper=None, axis=None), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.clip(upper=15, axis=None), pd.DataFrame), pd.DataFrame)
+    check(
+        assert_type(df.clip(upper=None, axis=None, inplace=True), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(assert_type(df.clip(upper=15, axis=None, inplace=True), None), type(None))
+
+    check(assert_type(df.clip(upper=None, axis=0), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.clip(upper=15, axis=0), pd.DataFrame), pd.DataFrame)
+    check(
+        assert_type(df.clip(upper=pd.Series([1, 2]), axis=0), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(upper=None, axis="index", inplace=True), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(upper=15, axis="index", inplace=True), None),
+        type(None),
+    )
+    check(
+        assert_type(df.clip(upper=pd.Series([1, 2]), axis="index", inplace=True), None),
+        type(None),
+    )
+    check(assert_type(df.clip(upper=None, axis="index"), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.clip(upper=15, axis="index"), pd.DataFrame), pd.DataFrame)
+    check(
+        assert_type(df.clip(upper=pd.Series([1, 2]), axis="index"), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(upper=None, axis=0, inplace=True), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(assert_type(df.clip(upper=15, axis=0, inplace=True), None), type(None))
+
+    # without upper
+    check(
+        assert_type(df.clip(lower=None, axis=None), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(assert_type(df.clip(lower=5, axis=None), pd.DataFrame), pd.DataFrame)
+    check(
+        assert_type(df.clip(lower=None, axis=None, inplace=True), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=5, axis=None, inplace=True), None),
+        type(None),
+    )
+    check(
+        assert_type(df.clip(lower=None, axis=None, inplace=True), pd.DataFrame),
+        pd.DataFrame,
+    )
+
+    check(assert_type(df.clip(lower=None, axis=0), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.clip(lower=5, axis=0), pd.DataFrame), pd.DataFrame)
+    check(
+        assert_type(df.clip(lower=pd.Series([1, 2]), axis=0), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=None, axis="index", inplace=True), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=5, axis="index", inplace=True), None),
+        type(None),
+    )
+    check(
+        assert_type(df.clip(lower=pd.Series([1, 2]), axis="index", inplace=True), None),
+        type(None),
+    )
+    check(
+        assert_type(df.clip(lower=None, axis="index"), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=5, axis="index"), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=pd.Series([1, 2]), axis="index"), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.clip(lower=None, axis=0, inplace=True), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(assert_type(df.clip(lower=5, axis=0, inplace=True), None), type(None))
 
 
 def test_types_abs() -> None:
@@ -1698,6 +1894,27 @@ def test_types_to_string() -> None:
     df.to_string(col_space={"col1": 1, "col2": 3})
 
 
+def test_dataframe_to_string_float_fmt() -> None:
+    """Test the different argument types for float_format."""
+    df = pd.DataFrame(
+        {"values": [2.304, 1.1, 3487392, 13.4732894237, 14.3, 18.0, 17.434, 19.3]}
+    )
+    check(assert_type(df.to_string(), str), str)
+
+    def _formatter(x) -> str:
+        return f"{x:.2f}"
+
+    check(assert_type(df.to_string(float_format=_formatter), str), str)
+    check(
+        assert_type(
+            df.to_string(float_format=EngFormatter(accuracy=2, use_eng_prefix=False)),
+            str,
+        ),
+        str,
+    )
+    check(assert_type(df.to_string(float_format="%.2f"), str), str)
+
+
 def test_types_to_html() -> None:
     df = pd.DataFrame(
         data={
@@ -2437,7 +2654,13 @@ def test_groupby_series_methods() -> None:
 
 def test_dataframe_pct_change() -> None:
     df = pd.DataFrame({"x": [1, 2, 2, 3, 3], "y": [10, 20, 30, 40, 50]})
-    df.pct_change(fill_method=None)
+    check(assert_type(df.pct_change(), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.pct_change(fill_method=None), pd.DataFrame), pd.DataFrame)
+    check(
+        assert_type(df.pct_change(axis="columns", periods=-1), pd.DataFrame),
+        pd.DataFrame,
+    )
+    check(assert_type(df.pct_change(fill_value=0), pd.DataFrame), pd.DataFrame)
 
 
 def test_indexslice_setitem():
@@ -3223,6 +3446,25 @@ def test_resample() -> None:
     check(assert_type(df.resample("2min").sem(), pd.DataFrame), pd.DataFrame)
     check(assert_type(df.resample("2min").median(), pd.DataFrame), pd.DataFrame)
     check(assert_type(df.resample("2min").ohlc(), pd.DataFrame), pd.DataFrame)
+
+
+def test_squeeze() -> None:
+    df1 = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    check(
+        assert_type(df1.squeeze(), Union[pd.DataFrame, pd.Series, Scalar]), pd.DataFrame
+    )
+    df2 = pd.DataFrame({"a": [1, 2]})
+    check(assert_type(df2.squeeze(), Union[pd.DataFrame, pd.Series, Scalar]), pd.Series)
+    df3 = pd.DataFrame({"a": [1], "b": [2]})
+    check(
+        assert_type(df3.squeeze(), Union[pd.DataFrame, pd.Series, Scalar]),
+        pd.Series,
+        np.integer,
+    )
+    df4 = pd.DataFrame({"a": [1]})
+    check(
+        assert_type(df4.squeeze(), Union[pd.DataFrame, pd.Series, Scalar]), np.integer
+    )
 
 
 def test_loc_set() -> None:
@@ -4087,3 +4329,13 @@ def test_combine() -> None:
         ),
         pd.DataFrame,
     )
+
+
+def test_df_loc_dict() -> None:
+    """Test that we can set a dict to a df.loc result GH1203."""
+    df = pd.DataFrame(columns=["X"])
+    df.loc[0] = {"X": 0}
+    check(assert_type(df, pd.DataFrame), pd.DataFrame)
+
+    df.iloc[0] = {"X": 0}
+    check(assert_type(df, pd.DataFrame), pd.DataFrame)
