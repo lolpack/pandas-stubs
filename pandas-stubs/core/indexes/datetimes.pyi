@@ -5,15 +5,10 @@ from collections.abc import (
 from datetime import (
     datetime,
     timedelta,
-    tzinfo,
+    tzinfo as _tzinfo,
 )
 from typing import overload
 
-from _typing import (
-    Axes,
-    Frequency,
-    TimeZones,
-)
 import numpy as np
 from pandas import (
     DataFrame,
@@ -31,10 +26,13 @@ from pandas.core.series import (
 from typing_extensions import Self
 
 from pandas._typing import (
+    AxesData,
     DateAndDatetimeLike,
     Dtype,
+    Frequency,
     IntervalClosedType,
     TimeUnit,
+    TimeZones,
 )
 
 from pandas.core.dtypes.dtypes import DatetimeTZDtype
@@ -44,7 +42,7 @@ from pandas.tseries.offsets import BaseOffset
 class DatetimeIndex(DatetimeTimedeltaMixin[Timestamp], DatetimeIndexProperties):
     def __init__(
         self,
-        data: Axes,
+        data: AxesData,
         freq: Frequency = ...,
         tz: TimeZones = ...,
         ambiguous: str = ...,
@@ -87,7 +85,7 @@ class DatetimeIndex(DatetimeTimedeltaMixin[Timestamp], DatetimeIndexProperties):
     def to_julian_date(self) -> Index[float]: ...
     def isocalendar(self) -> DataFrame: ...
     @property
-    def tzinfo(self) -> tzinfo | None: ...
+    def tzinfo(self) -> _tzinfo | None: ...
     @property
     def dtype(self) -> np.dtype | DatetimeTZDtype: ...
     def shift(self, periods: int = ..., freq=...) -> Self: ...

@@ -1,3 +1,7 @@
+from builtins import (
+    bool as _bool,
+    str as _str,
+)
 from collections.abc import (
     Callable,
     Hashable,
@@ -18,10 +22,6 @@ from typing import (
     overload,
 )
 
-from _typing import (
-    FloatFormatType,
-    TimeZones,
-)
 from matplotlib.axes import Axes as PlotAxes
 import numpy as np
 from pandas import (
@@ -32,7 +32,6 @@ from pandas import (
 from pandas.core.arraylike import OpsMixin
 from pandas.core.generic import NDFrame
 from pandas.core.groupby.generic import DataFrameGroupBy
-from pandas.core.groupby.grouper import Grouper
 from pandas.core.indexers import BaseIndexer
 from pandas.core.indexes.base import (
     Index,
@@ -50,7 +49,15 @@ from pandas.core.indexing import (
     _LocIndexer,
 )
 from pandas.core.interchange.dataframe_protocol import DataFrame as DataFrameXchg
-from pandas.core.series import Series
+from pandas.core.reshape.pivot import (
+    _PivotTableColumnsTypes,
+    _PivotTableIndexTypes,
+    _PivotTableValuesTypes,
+)
+from pandas.core.series import (
+    Series,
+    UnknownSeries,
+)
 from pandas.core.window import (
     Expanding,
     ExponentialMovingWindow,
@@ -77,6 +84,8 @@ from pandas._typing import (
     AggFuncTypeDictFrame,
     AggFuncTypeDictSeries,
     AggFuncTypeFrame,
+    AlignJoin,
+    AnyAll,
     AnyArrayLike,
     ArrayLike,
     AstypeArg,
@@ -87,9 +96,11 @@ from pandas._typing import (
     CalculationMethod,
     ColspaceArgType,
     CompressionOptions,
+    DropKeep,
     Dtype,
     FilePath,
     FillnaOptions,
+    FloatFormatType,
     FormattersType,
     GroupByObjectNonScalar,
     HashableT,
@@ -98,14 +109,16 @@ from pandas._typing import (
     HashableT3,
     IgnoreRaise,
     IndexingInt,
+    IndexKeyFunc,
     IndexLabel,
     IndexType,
     InterpolateOptions,
     IntervalClosedType,
     IntervalT,
     IntoColumn,
-    JoinHow,
+    JoinValidate,
     JsonFrameOrient,
+    JSONSerializable,
     Label,
     Level,
     ListLike,
@@ -113,12 +126,15 @@ from pandas._typing import (
     ListLikeU,
     MaskType,
     MergeHow,
+    MergeValidate,
     NaPosition,
     NDFrameT,
+    NsmallestNlargestKeep,
     ParquetEngine,
     QuantileInterpolation,
     RandomState,
     ReadBuffer,
+    ReindexMethod,
     Renamer,
     ReplaceValue,
     Scalar,
@@ -132,9 +148,14 @@ from pandas._typing import (
     StrLike,
     Suffixes,
     T as _T,
-    TimestampConvention,
+    TimeAmbiguous,
+    TimeNonexistent,
     TimeUnit,
-    ValidationOptions,
+    TimeZones,
+    ToStataByteorder,
+    ToTimestampHow,
+    UpdateJoin,
+    ValueKeyFunc,
     WriteBuffer,
     XMLParsers,
     npt,
@@ -143,9 +164,6 @@ from pandas._typing import (
 
 from pandas.io.formats.style import Styler
 from pandas.plotting import PlotAccessor
-
-_str = str
-_bool = bool
 
 class _iLocIndexerFrame(_iLocIndexer, Generic[_T]):
     @overload
@@ -328,16 +346,16 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     def shape(self) -> tuple[int, int]: ...
     @property
     def style(self) -> Styler: ...
-    def items(self) -> Iterable[tuple[Hashable, Series]]: ...
-    def iterrows(self) -> Iterable[tuple[Hashable, Series]]: ...
+    def items(self) -> Iterator[tuple[Hashable, Series]]: ...
+    def iterrows(self) -> Iterator[tuple[Hashable, Series]]: ...
     @overload
     def itertuples(
         self, index: _bool = ..., name: _str = ...
-    ) -> Iterable[_PandasNamedTuple]: ...
+    ) -> Iterator[_PandasNamedTuple]: ...
     @overload
     def itertuples(
         self, index: _bool = ..., name: None = None
-    ) -> Iterable[tuple[Any, ...]]: ...
+    ) -> Iterator[tuple[Any, ...]]: ...
     def __len__(self) -> int: ...
     @overload
     def dot(self, other: DataFrame | ArrayLike) -> Self: ...
@@ -472,7 +490,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         *,
         convert_dates: dict[HashableT1, StataDateFormat] | None = ...,
         write_index: _bool = ...,
-        byteorder: Literal["<", ">", "little", "big"] | None = ...,
+        byteorder: ToStataByteorder | None = ...,
         time_stamp: dt.datetime | None = ...,
         data_label: _str | None = ...,
         variable_labels: dict[HashableT2, str] | None = ...,
@@ -679,7 +697,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     def info(
         self,
         verbose: bool | None = ...,
-        buf: WriteBuffer[str] = ...,
+        buf: WriteBuffer[str] | None = ...,
         max_cols: int | None = ...,
         memory_usage: bool | Literal["deep"] | None = ...,
         show_counts: bool | None = ...,
@@ -698,8 +716,14 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         self,
         expr: _str,
         *,
+        parser: Literal["pandas", "python"] = ...,
+        engine: Literal["python", "numexpr"] | None = ...,
+        local_dict: dict[_str, Any] | None = ...,
+        global_dict: dict[_str, Any] | None = ...,
+        resolvers: list[Mapping] | None = ...,
+        level: int = ...,
+        target: object | None = ...,
         inplace: Literal[True],
-        **kwargs: Any,  # TODO: make more precise https://github.com/pandas-dev/pandas-stubs/issues/1173
     ) -> None: ...
     @overload
     def query(
@@ -707,7 +731,13 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         expr: _str,
         *,
         inplace: Literal[False] = ...,
-        **kwargs: Any,  # TODO: make more precise https://github.com/pandas-dev/pandas-stubs/issues/1173
+        parser: Literal["pandas", "python"] = ...,
+        engine: Literal["python", "numexpr"] | None = ...,
+        local_dict: dict[_str, Any] | None = ...,
+        global_dict: dict[_str, Any] | None = ...,
+        resolvers: list[Mapping] | None = ...,
+        level: int = ...,
+        target: object | None = ...,
     ) -> Self: ...
     @overload
     def eval(self, expr: _str, *, inplace: Literal[True], **kwargs: Any) -> None: ...
@@ -769,7 +799,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     def align(
         self,
         other: NDFrameT,
-        join: JoinHow = ...,
+        join: AlignJoin = ...,
         axis: Axis | None = ...,
         level: Level | None = ...,
         copy: _bool = ...,
@@ -781,7 +811,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         index: Axes | None = ...,
         columns: Axes | None = ...,
         axis: Axis | None = ...,
-        method: FillnaOptions | Literal["nearest"] | None = ...,
+        method: ReindexMethod | None = ...,
         copy: bool = ...,
         level: int | _str = ...,
         fill_value: Scalar | None = ...,
@@ -924,7 +954,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         self,
         *,
         axis: Axis = ...,
-        how: Literal["any", "all"] = ...,
+        how: AnyAll = ...,
         thresh: int | None = ...,
         subset: ListLikeU | Scalar | None = ...,
         inplace: Literal[True],
@@ -935,7 +965,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         self,
         *,
         axis: Axis = ...,
-        how: Literal["any", "all"] = ...,
+        how: AnyAll = ...,
         thresh: int | None = ...,
         subset: ListLikeU | Scalar | None = ...,
         inplace: Literal[False] = ...,
@@ -946,7 +976,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         self,
         subset: Hashable | Iterable[Hashable] | None = ...,
         *,
-        keep: NaPosition | _bool = ...,
+        keep: DropKeep = ...,
         inplace: Literal[True],
         ignore_index: _bool = ...,
     ) -> None: ...
@@ -955,14 +985,14 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         self,
         subset: Hashable | Iterable[Hashable] | None = ...,
         *,
-        keep: NaPosition | _bool = ...,
+        keep: DropKeep = ...,
         inplace: Literal[False] = ...,
         ignore_index: _bool = ...,
     ) -> Self: ...
     def duplicated(
         self,
         subset: Hashable | Iterable[Hashable] | None = ...,
-        keep: NaPosition | _bool = ...,
+        keep: DropKeep = ...,
     ) -> Series: ...
     @overload
     def sort_values(
@@ -975,7 +1005,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         na_position: NaPosition = ...,
         ignore_index: _bool = ...,
         inplace: Literal[True],
-        key: Callable | None = ...,
+        key: ValueKeyFunc = ...,
     ) -> None: ...
     @overload
     def sort_values(
@@ -988,7 +1018,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         na_position: NaPosition = ...,
         ignore_index: _bool = ...,
         inplace: Literal[False] = ...,
-        key: Callable | None = ...,
+        key: ValueKeyFunc = ...,
     ) -> Self: ...
     @overload
     def sort_index(
@@ -1002,7 +1032,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         sort_remaining: _bool = ...,
         ignore_index: _bool = ...,
         inplace: Literal[True],
-        key: Callable | None = ...,
+        key: IndexKeyFunc = ...,
     ) -> None: ...
     @overload
     def sort_index(
@@ -1016,7 +1046,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         sort_remaining: _bool = ...,
         ignore_index: _bool = ...,
         inplace: Literal[False] = ...,
-        key: Callable | None = ...,
+        key: IndexKeyFunc = ...,
     ) -> Self: ...
     @overload
     def value_counts(
@@ -1040,13 +1070,13 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         self,
         n: int,
         columns: _str | list[_str],
-        keep: NaPosition | Literal["all"] = ...,
+        keep: NsmallestNlargestKeep = ...,
     ) -> Self: ...
     def nsmallest(
         self,
         n: int,
         columns: _str | list[_str],
-        keep: NaPosition | Literal["all"] = ...,
+        keep: NsmallestNlargestKeep = ...,
     ) -> Self: ...
     def swaplevel(self, i: Level = ..., j: Level = ..., axis: Axis = ...) -> Self: ...
     def reorder_levels(self, order: list, axis: Axis = ...) -> Self: ...
@@ -1069,7 +1099,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     def update(
         self,
         other: DataFrame | Series,
-        join: _str = ...,
+        join: UpdateJoin = ...,
         overwrite: _bool = ...,
         filter_func: Callable | None = ...,
         errors: IgnoreRaise = ...,
@@ -1275,9 +1305,9 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     ) -> Self: ...
     def pivot_table(
         self,
-        values: _str | None | Sequence[_str] = ...,
-        index: _str | Grouper | Sequence | None = ...,
-        columns: _str | Grouper | Sequence | None = ...,
+        values: _PivotTableValuesTypes = ...,
+        index: _PivotTableIndexTypes = ...,
+        columns: _PivotTableColumnsTypes = ...,
         aggfunc=...,
         fill_value: Scalar | None = ...,
         margins: _bool = ...,
@@ -1300,7 +1330,8 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     def unstack(
         self,
         level: Level = ...,
-        fill_value: int | _str | dict | None = ...,
+        fill_value: Scalar | None = ...,
+        sort: _bool = ...,
     ) -> Self | Series: ...
     def melt(
         self,
@@ -1503,7 +1534,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         lsuffix: _str = ...,
         rsuffix: _str = ...,
         sort: _bool = ...,
-        validate: ValidationOptions | None = ...,
+        validate: JoinValidate | None = ...,
     ) -> Self: ...
     def merge(
         self,
@@ -1515,10 +1546,10 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         left_index: _bool = ...,
         right_index: _bool = ...,
         sort: _bool = ...,
-        suffixes: tuple[_str | None, _str | None] = ...,
+        suffixes: Suffixes = ...,
         copy: _bool = ...,
         indicator: _bool | _str = ...,
-        validate: _str | None = ...,
+        validate: MergeValidate | None = ...,
     ) -> Self: ...
     def round(
         self, decimals: int | dict | Series = ..., *args: Any, **kwargs: Any
@@ -1582,7 +1613,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     def to_timestamp(
         self,
         freq=...,
-        how: TimestampConvention = ...,
+        how: ToTimestampHow = ...,
         axis: Axis = ...,
         copy: _bool = ...,
     ) -> Self: ...
@@ -1981,7 +2012,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
             | Callable[[DataFrame], DataFrame]
             | Callable[[Any], _bool]
         ),
-        other: Scalar | Series[S1] | DataFrame | Callable | NAType | None = ...,
+        other: Scalar | UnknownSeries | DataFrame | Callable | NAType | None = ...,
         *,
         inplace: Literal[True],
         axis: Axis | None = ...,
@@ -1997,7 +2028,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
             | Callable[[DataFrame], DataFrame]
             | Callable[[Any], _bool]
         ),
-        other: Scalar | Series[S1] | DataFrame | Callable | NAType | None = ...,
+        other: Scalar | UnknownSeries | DataFrame | Callable | NAType | None = ...,
         *,
         inplace: Literal[False] = ...,
         axis: Axis | None = ...,
@@ -2118,7 +2149,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     def reindex_like(
         self,
         other: DataFrame,
-        method: _str | FillnaOptions | Literal["nearest"] | None = ...,
+        method: FillnaOptions | Literal["nearest"] | None = ...,
         copy: _bool = ...,
         limit: int | None = ...,
         tolerance: Scalar | AnyArrayLike | Sequence[Scalar] = ...,
@@ -2298,7 +2329,6 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     ) -> Series: ...
     def swapaxes(self, axis1: Axis, axis2: Axis, copy: _bool = ...) -> Self: ...
     def tail(self, n: int = ...) -> Self: ...
-    def take(self, indices: list, axis: Axis = ..., **kwargs: Any) -> Self: ...
     @overload
     def to_json(
         self,
@@ -2309,9 +2339,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         double_precision: int = ...,
         force_ascii: _bool = ...,
         date_unit: TimeUnit = ...,
-        default_handler: (
-            Callable[[Any], _str | float | _bool | list | dict] | None
-        ) = ...,
+        default_handler: Callable[[Any], JSONSerializable] | None = ...,
         lines: Literal[True],
         compression: CompressionOptions = ...,
         index: _bool = ...,
@@ -2328,9 +2356,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         double_precision: int = ...,
         force_ascii: _bool = ...,
         date_unit: TimeUnit = ...,
-        default_handler: (
-            Callable[[Any], _str | float | _bool | list | dict] | None
-        ) = ...,
+        default_handler: Callable[[Any], JSONSerializable] | None = ...,
         lines: Literal[True],
         compression: CompressionOptions = ...,
         index: _bool = ...,
@@ -2346,9 +2372,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         double_precision: int = ...,
         force_ascii: _bool = ...,
         date_unit: TimeUnit = ...,
-        default_handler: (
-            Callable[[Any], _str | float | _bool | list | dict] | None
-        ) = ...,
+        default_handler: Callable[[Any], JSONSerializable] | None = ...,
         lines: _bool = ...,
         compression: CompressionOptions = ...,
         index: _bool = ...,
@@ -2364,9 +2388,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         double_precision: int = ...,
         force_ascii: _bool = ...,
         date_unit: TimeUnit = ...,
-        default_handler: (
-            Callable[[Any], _str | float | _bool | list | dict] | None
-        ) = ...,
+        default_handler: Callable[[Any], JSONSerializable] | None = ...,
         lines: _bool = ...,
         compression: CompressionOptions = ...,
         index: _bool = ...,
@@ -2447,8 +2469,8 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
         axis: Axis = ...,
         level: Level | None = ...,
         copy: _bool = ...,
-        ambiguous=...,
-        nonexistent: _str = ...,
+        ambiguous: TimeAmbiguous = ...,
+        nonexistent: TimeNonexistent = ...,
     ) -> Self: ...
     def var(
         self,

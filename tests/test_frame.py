@@ -339,6 +339,7 @@ def test_assign() -> None:
     check(assert_type(df.assign(c=my_unnamed_func), pd.DataFrame), pd.DataFrame)
     check(assert_type(df.assign(c=my_named_func_1), pd.DataFrame), pd.DataFrame)
     check(assert_type(df.assign(c=my_named_func_2), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.assign(c=None), pd.DataFrame), pd.DataFrame)
 
 
 def test_types_sample() -> None:
@@ -514,6 +515,23 @@ def test_types_query() -> None:
     check(assert_type(df.query("col1 % col2 == 0", inplace=True), None), type(None))
 
 
+def test_types_query_kwargs() -> None:
+    df = pd.DataFrame(data={"col1": [1, 2, 3, 4], "col2": [3, 0, 1, 7]})
+    check(
+        assert_type(
+            df.query("col1 > col2", parser="pandas", engine="numexpr"), pd.DataFrame
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(
+            df.query("col1 > col2", parser="pandas", engine="numexpr", inplace=True),
+            None,
+        ),
+        type(None),
+    )
+
+
 def test_types_eval() -> None:
     df = pd.DataFrame(data={"col1": [1, 2, 3, 4], "col2": [3, 0, 1, 7]})
     check(assert_type(df.eval("E = col1 > col2", inplace=True), None), type(None))
@@ -599,31 +617,74 @@ def test_types_median() -> None:
 def test_types_iterrows() -> None:
     df = pd.DataFrame(data={"col1": [2, 1], "col2": [3, 4]})
     check(
-        assert_type(df.iterrows(), "Iterable[tuple[Hashable, pd.Series]]"),
+        assert_type(df.iterrows(), "Iterator[tuple[Hashable, pd.Series]]"),
         Iterable,
         tuple,
     )
+    for t1, t2 in df.iterrows():
+        check(assert_type(t1, Hashable), Hashable)
+        check(assert_type(t2, pd.Series), pd.Series)
 
 
 def test_types_itertuples() -> None:
     df = pd.DataFrame(data={"col1": [2, 1], "col2": [3, 4]})
     check(
-        assert_type(df.itertuples(), Iterable[_PandasNamedTuple]),
-        Iterable,
+        assert_type(df.itertuples(), Iterator[_PandasNamedTuple]),
+        Iterator,
         _PandasNamedTuple,
     )
     check(
         assert_type(
-            df.itertuples(index=False, name="Foobar"), Iterable[_PandasNamedTuple]
+            df.itertuples(index=False, name="Foobar"), Iterator[_PandasNamedTuple]
         ),
-        Iterable,
+        Iterator,
         _PandasNamedTuple,
     )
     check(
-        assert_type(df.itertuples(index=False, name=None), Iterable[tuple[Any, ...]]),
-        Iterable,
+        assert_type(df.itertuples(index=False, name=None), Iterator[tuple[Any, ...]]),
+        Iterator,
         object,
     )
+
+    for t1 in df.itertuples():
+        assert_type(t1, _PandasNamedTuple)
+        assert t1.__class__.__name__ == "Pandas"
+        assert isinstance(t1.Index, int)
+        assert isinstance(t1.col1, int)
+        assert isinstance(t1.col2, int)
+        for k in [0, 1, 2]:
+            assert isinstance(t1[k], int)
+
+    for t1 in df.itertuples(name="FooBar"):
+        assert_type(t1, _PandasNamedTuple)
+        assert t1.__class__.__name__ == "FooBar"
+        assert isinstance(t1.Index, int)
+        assert isinstance(t1.col1, int)
+        assert isinstance(t1.col2, int)
+        for k in [0, 1, 2]:
+            assert isinstance(t1[k], int)
+
+
+def test_types_items() -> None:
+    df = pd.DataFrame(data={"col1": [2, 1], "col2": [3, 4]})
+    check(
+        assert_type(df.items(), Iterator[tuple[Hashable, pd.Series]]),
+        Iterator,
+        tuple,
+    )
+
+    for t1, t2 in df.items():
+        check(assert_type(t1, Hashable), Hashable)
+        check(assert_type(t2, pd.Series), pd.Series)
+
+
+def test_frame_iterator() -> None:
+    """Test iterator methods for a dataframe GH1217."""
+    df = pd.DataFrame(data={"col1": [2, 1], "col2": [3, 4]})
+
+    check(assert_type(next(df.items()), tuple[Hashable, "pd.Series"]), tuple)
+    check(assert_type(next(df.iterrows()), tuple[Hashable, "pd.Series"]), tuple)
+    check(assert_type(next(df.itertuples()), _PandasNamedTuple), _PandasNamedTuple)
 
 
 def test_types_sum() -> None:
@@ -1316,6 +1377,17 @@ def test_types_pivot_table() -> None:
     check(
         assert_type(
             df.pivot_table(index="col1", columns="col3", values=["col2", "col4"]),
+            pd.DataFrame,
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(
+            df.pivot_table(
+                index=df["col1"].name,
+                columns=df["col3"].name,
+                values=[df["col2"].name, df["col4"].name],
+            ),
             pd.DataFrame,
         ),
         pd.DataFrame,
@@ -2984,22 +3056,29 @@ def test_iloc_tuple() -> None:
     df = df.iloc[0:2,]
 
 
+def test_take() -> None:
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    check(assert_type(df.take([0, 1]), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.take([np.int64(0), np.int64(1)]), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.take(np.array([0, 1])), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.take([0, 1], "index"), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.take([0, 1], 0), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.take([0, 1], "columns"), pd.DataFrame), pd.DataFrame)
+    check(assert_type(df.take([0, 1], 1), pd.DataFrame), pd.DataFrame)
+
+
 def test_set_columns() -> None:
     # GH 73
     df = pd.DataFrame({"a": [1, 2, 3], "b": [0.0, 1, 1]})
-    # Next lines should work, but it is a mypy bug
-    # https://github.com/python/mypy/issues/3004
-    # pyright accepts this, so we only type check for pyright,
-    # and also test the code with pytest
-    df.columns = ["c", "d"]  # type: ignore[assignment]
-    df.columns = [1, 2]  # type: ignore[assignment]
-    df.columns = [1, "a"]  # type: ignore[assignment]
-    df.columns = np.array([1, 2])  # type: ignore[assignment]
-    df.columns = pd.Series([1, 2])  # type: ignore[assignment]
-    df.columns = np.array([1, "a"])  # type: ignore[assignment]
-    df.columns = pd.Series([1, "a"])  # type: ignore[assignment]
-    df.columns = (1, 2)  # type: ignore[assignment]
-    df.columns = (1, "a")  # type: ignore[assignment]
+    df.columns = ["c", "d"]
+    df.columns = [1, 2]
+    df.columns = [1, "a"]
+    df.columns = np.array([1, 2])
+    df.columns = pd.Series([1, 2])
+    df.columns = np.array([1, "a"])
+    df.columns = pd.Series([1, "a"])
+    df.columns = (1, 2)
+    df.columns = (1, "a")
     if TYPE_CHECKING_INVALID_USAGE:
         df.columns = "abc"  # type: ignore[assignment] # pyright: ignore[reportAttributeAccessIssue]
 
@@ -4287,12 +4366,8 @@ def test_hashable_args() -> None:
         df.to_xml(path, elem_cols=test)
         df.to_xml(path, elem_cols=["test"])
 
-    # Next lines should work, but it is a mypy bug
-    # https://github.com/python/mypy/issues/3004
-    # pyright accepts this, so we only type check for pyright,
-    # and also test the code with pytest
-    df.columns = test  # type: ignore[assignment]
-    df.columns = ["test"]  # type: ignore[assignment]
+    df.columns = test
+    df.columns = ["test"]
 
     testDict = {"test": 1}
     with ensure_clean() as path:
@@ -4339,3 +4414,64 @@ def test_df_loc_dict() -> None:
 
     df.iloc[0] = {"X": 0}
     check(assert_type(df, pd.DataFrame), pd.DataFrame)
+
+
+def test_unstack() -> None:
+    """Test different types of argument for `fill_value` in DataFrame.unstack."""
+    df = pd.DataFrame(
+        [
+            ["a", "b", pd.Timestamp(2021, 3, 2)],
+            ["a", "a", pd.Timestamp(2023, 4, 2)],
+            ["b", "b", pd.Timestamp(2024, 3, 2)],
+        ]
+    ).set_index([0, 1])
+    df_sr = pd.DataFrame(
+        [
+            ["a", "b", "abc"],
+            ["a", "a", "def"],
+            ["b", "b", "ghi"],
+        ]
+    ).set_index([0, 1])
+    df_flt = pd.DataFrame(
+        [
+            ["a", "b", 1],
+            ["a", "a", 12],
+            ["b", "b", 14],
+        ]
+    ).set_index([0, 1])
+
+    check(assert_type(df.unstack(0), pd.DataFrame | pd.Series), pd.DataFrame)
+    check(
+        assert_type(
+            df.unstack(1, fill_value=pd.Timestamp(2023, 4, 5)), pd.DataFrame | pd.Series
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df_flt.unstack(1, fill_value=0.0), pd.DataFrame | pd.Series),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df_flt.unstack(1, fill_value=1), pd.DataFrame | pd.Series),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df_sr.unstack(1, fill_value="string"), pd.DataFrame | pd.Series),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(df.unstack(0, sort=False), pd.DataFrame | pd.Series), pd.DataFrame
+    )
+    check(
+        assert_type(
+            df.unstack(1, fill_value=pd.Timestamp(2023, 4, 5), sort=True),
+            pd.DataFrame | pd.Series,
+        ),
+        pd.DataFrame,
+    )
+    check(
+        assert_type(
+            df_flt.unstack(1, fill_value=0.0, sort=False), pd.DataFrame | pd.Series
+        ),
+        pd.DataFrame,
+    )

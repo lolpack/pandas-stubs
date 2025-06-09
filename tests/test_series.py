@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import (
+    Hashable,
     Iterable,
     Iterator,
     Sequence,
@@ -20,7 +21,6 @@ from typing import (
     TypedDict,
     TypeVar,
     Union,
-    cast,
 )
 
 import numpy as np
@@ -1680,7 +1680,7 @@ def test_cat_ctor_values() -> None:
         assert_type(pd.Categorical(pd.Series(["a", "b", "a"])), pd.Categorical),
         pd.Categorical,
     )
-    s: Sequence = cast(Sequence, ["a", "b", "a"])
+    s = ["a", "b", "a"]
     check(assert_type(pd.Categorical(s), pd.Categorical), pd.Categorical)
     # GH 107
     check(
@@ -1713,6 +1713,16 @@ def test_iloc_getitem_ndarray() -> None:
     check(assert_type(values_s.iloc[indices_u16], pd.Series), pd.Series)
     check(assert_type(values_s.iloc[indices_u32], pd.Series), pd.Series)
     check(assert_type(values_s.iloc[indices_u64], pd.Series), pd.Series)
+
+
+def test_take() -> None:
+    s = pd.Series(np.arange(10), name="a")
+    check(assert_type(s.take([0, 1]), pd.Series), pd.Series)
+    check(
+        assert_type(s.take([np.int64(0), np.int64(1)]), pd.Series),
+        pd.Series,
+    )
+    check(assert_type(s.take(np.array([0, 1])), pd.Series), pd.Series)
 
 
 def test_iloc_setitem_ndarray() -> None:
@@ -3797,3 +3807,20 @@ def test_unknown() -> None:
 
     foo(s)
     check(assert_type(s + pd.Series([1]), pd.Series), pd.Series)
+
+
+def test_series_items() -> None:
+    s = pd.Series(data=[1, 2, 3, 4], index=["cow", "coal", "coalesce", ""])
+    check(assert_type(next(s.items()), tuple[Hashable, int]), tuple)
+    check(assert_type(s.items(), Iterator[tuple[Hashable, int]]), Iterator)
+
+
+def test_cumsum_timedelta() -> None:
+
+    s = pd.Series(pd.to_timedelta([1, 2, 3], "h"))
+    check(assert_type(s.cumsum(), "TimedeltaSeries"), pd.Series, pd.Timedelta)
+    check(
+        assert_type(pd.Timestamp(0) + s.cumsum(), "TimestampSeries"),
+        pd.Series,
+        pd.Timestamp,
+    )

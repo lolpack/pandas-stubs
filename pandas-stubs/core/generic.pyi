@@ -1,3 +1,7 @@
+from builtins import (
+    bool as _bool,
+    str as _str,
+)
 from collections.abc import (
     Callable,
     Hashable,
@@ -19,7 +23,9 @@ import numpy as np
 from pandas import Index
 import pandas.core.indexing as indexing
 from pandas.core.resample import DatetimeIndexResampler
-from pandas.core.series import Series
+from pandas.core.series import (
+    UnknownSeries,
+)
 import sqlalchemy.engine
 from typing_extensions import (
     Concatenate,
@@ -28,12 +34,12 @@ from typing_extensions import (
 
 from pandas._libs.lib import NoDefault
 from pandas._typing import (
-    S1,
     Axis,
     CompressionOptions,
     CSVQuoting,
     DtypeArg,
     DtypeBackend,
+    ExcelWriterMergeCells,
     FilePath,
     FileWriteMode,
     Frequency,
@@ -43,21 +49,20 @@ from pandas._typing import (
     IgnoreRaise,
     IndexLabel,
     Level,
+    OpenFileErrors,
     P,
     StorageOptions,
     T,
+    TakeIndexer,
     TimedeltaConvertibleTypes,
     TimeGrouperOrigin,
-    TimestampConvention,
     TimestampConvertibleTypes,
+    ToTimestampHow,
     WriteBuffer,
 )
 
 from pandas.io.pytables import HDFStore
 from pandas.io.sql import SQLTable
-
-_bool = bool
-_str = str
 
 class NDFrame(indexing.IndexingMixin):
     __hash__: ClassVar[None]  # type: ignore[assignment] # pyright: ignore[reportIncompatibleMethodOverride]
@@ -65,8 +70,8 @@ class NDFrame(indexing.IndexingMixin):
     def set_flags(
         self,
         *,
-        copy: bool = ...,
-        allows_duplicate_labels: bool | None = ...,
+        copy: _bool = ...,
+        allows_duplicate_labels: _bool | None = ...,
     ) -> Self: ...
     @property
     def attrs(self) -> dict[Hashable | None, Any]: ...
@@ -78,7 +83,7 @@ class NDFrame(indexing.IndexingMixin):
     def ndim(self) -> int: ...
     @property
     def size(self) -> int: ...
-    def equals(self, other: Series[S1]) -> _bool: ...
+    def equals(self, other: UnknownSeries) -> _bool: ...
     def __neg__(self) -> Self: ...
     def __pos__(self) -> Self: ...
     def __nonzero__(self) -> None: ...
@@ -104,7 +109,7 @@ class NDFrame(indexing.IndexingMixin):
         startrow: int = ...,
         startcol: int = ...,
         engine: _str | None = ...,
-        merge_cells: _bool = ...,
+        merge_cells: ExcelWriterMergeCells = ...,
         inf_rep: _str = ...,
         freeze_panes: tuple[int, int] | None = ...,
     ) -> None: ...
@@ -123,15 +128,7 @@ class NDFrame(indexing.IndexingMixin):
         nan_rep: _str | None = ...,
         dropna: _bool | None = ...,
         data_columns: Literal[True] | list[HashableT2] | None = ...,
-        errors: Literal[
-            "strict",
-            "ignore",
-            "replace",
-            "surrogateescape",
-            "xmlcharrefreplace",
-            "backslashreplace",
-            "namereplace",
-        ] = ...,
+        errors: OpenFileErrors = ...,
         encoding: _str = ...,
     ) -> None: ...
     @overload
@@ -275,7 +272,7 @@ class NDFrame(indexing.IndexingMixin):
         doublequote: _bool = ...,
         escapechar: _str | None = ...,
         decimal: _str = ...,
-        errors: _str = ...,
+        errors: OpenFileErrors = ...,
         storage_options: StorageOptions = ...,
     ) -> None: ...
     @overload
@@ -300,7 +297,7 @@ class NDFrame(indexing.IndexingMixin):
         doublequote: _bool = ...,
         escapechar: _str | None = ...,
         decimal: _str = ...,
-        errors: _str = ...,
+        errors: OpenFileErrors = ...,
         storage_options: StorageOptions = ...,
     ) -> _str: ...
     def __delitem__(self, idx: Hashable) -> None: ...
@@ -410,7 +407,7 @@ class NDFrame(indexing.IndexingMixin):
         axis: Axis | NoDefault = ...,
         closed: Literal["right", "left"] | None = ...,
         label: Literal["right", "left"] | None = ...,
-        convention: TimestampConvention = ...,
+        convention: ToTimestampHow = ...,
         kind: Literal["period", "timestamp"] | None = ...,
         on: Level | None = ...,
         level: Level | None = ...,
@@ -418,3 +415,5 @@ class NDFrame(indexing.IndexingMixin):
         offset: TimedeltaConvertibleTypes | None = ...,
         group_keys: _bool = ...,
     ) -> DatetimeIndexResampler[Self]: ...
+    @final
+    def take(self, indices: TakeIndexer, axis: Axis = ..., **kwargs: Any) -> Self: ...

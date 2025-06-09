@@ -1,3 +1,7 @@
+from builtins import (
+    bool as _bool,
+    str as _str,
+)
 from collections import dict_keys  # type: ignore[attr-defined]
 from collections.abc import (
     Callable,
@@ -24,12 +28,6 @@ from typing import (
     overload,
 )
 
-from _typing import (
-    FloatFormatType,
-    Label,
-    ReplaceValue,
-    TimeZones,
-)
 from matplotlib.axes import (
     Axes as PlotAxes,
     SubplotBase,
@@ -110,6 +108,7 @@ from pandas._typing import (
     AggFuncTypeBase,
     AggFuncTypeDictFrame,
     AggFuncTypeSeriesToFrame,
+    AnyAll,
     AnyArrayLike,
     ArrayLike,
     Axes,
@@ -122,31 +121,39 @@ from pandas._typing import (
     CategoryDtypeArg,
     ComplexDtypeArg,
     CompressionOptions,
+    DropKeep,
     Dtype,
     DtypeObj,
     FilePath,
     FillnaOptions,
     FloatDtypeArg,
+    FloatFormatType,
     GroupByObjectNonScalar,
     HashableT1,
     IgnoreRaise,
     IndexingInt,
+    IndexKeyFunc,
     IndexLabel,
     IntDtypeArg,
     InterpolateOptions,
     IntervalClosedType,
     IntervalT,
     JoinHow,
+    JSONSerializable,
     JsonSeriesOrient,
+    Label,
     Level,
     ListLike,
     ListLikeU,
     MaskType,
     NaPosition,
+    NsmallestNlargestKeep,
     ObjectDtypeArg,
     QuantileInterpolation,
     RandomState,
+    ReindexMethod,
     Renamer,
+    ReplaceValue,
     Scalar,
     ScalarT,
     SequenceNotStr,
@@ -154,12 +161,16 @@ from pandas._typing import (
     SortKind,
     StrDtypeArg,
     StrLike,
-    T,
+    Suffixes,
+    T as _T,
+    TimeAmbiguous,
     TimedeltaDtypeArg,
-    TimestampConvention,
     TimestampDtypeArg,
     TimeUnit,
+    TimeZones,
+    ToTimestampHow,
     UIntDtypeArg,
+    ValueKeyFunc,
     VoidDtypeArg,
     WriteBuffer,
     np_ndarray_anyint,
@@ -171,9 +182,6 @@ from pandas.core.dtypes.base import ExtensionDtype
 from pandas.core.dtypes.dtypes import CategoricalDtype
 
 from pandas.plotting import PlotAccessor
-
-_bool = bool
-_str = str
 
 class _iLocIndexerSeries(_iLocIndexer, Generic[S1]):
     # get item
@@ -206,7 +214,7 @@ class _LocIndexerSeries(_LocIndexer, Generic[S1]):
         idx: (
             MaskType
             | Index
-            | SequenceNotStr[float | str | Timestamp]
+            | SequenceNotStr[float | _str | Timestamp]
             | slice
             | _IndexSliceTuple
             | Sequence[_IndexSliceTuple]
@@ -224,7 +232,7 @@ class _LocIndexerSeries(_LocIndexer, Generic[S1]):
     @overload
     def __setitem__(
         self,
-        idx: str,
+        idx: _str,
         value: S1 | None,
     ) -> None: ...
     @overload
@@ -262,21 +270,21 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def __new__(
         cls,
-        data: Sequence[list[str]],
+        data: Sequence[list[_str]],
         index: Axes | None = ...,
         dtype: Dtype = ...,
         name: Hashable = ...,
         copy: bool = ...,
-    ) -> Series[list[str]]: ...
+    ) -> Series[list[_str]]: ...
     @overload
     def __new__(
         cls,
-        data: Sequence[str],
+        data: Sequence[_str],
         index: Axes | None = ...,
         dtype: Dtype = ...,
         name: Hashable = ...,
         copy: bool = ...,
-    ) -> Series[str]: ...
+    ) -> Series[_str]: ...
     @overload
     def __new__(
         cls,
@@ -450,9 +458,6 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def __array__(self, dtype=...) -> np.ndarray: ...
     @property
     def axes(self) -> list: ...
-    def take(
-        self, indices: Sequence, axis: AxisIndex = ..., **kwargs: Any
-    ) -> Series[S1]: ...
     def __getattr__(self, name: _str) -> S1: ...
     @overload
     def __getitem__(
@@ -474,7 +479,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def get(self, key: Hashable, default: S1) -> S1: ...
     @overload
-    def get(self, key: Hashable, default: T) -> S1 | T: ...
+    def get(self, key: Hashable, default: _T) -> S1 | _T: ...
     def repeat(
         self, repeats: int | list[int], axis: AxisIndex | None = ...
     ) -> Series[S1]: ...
@@ -515,7 +520,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def to_string(
         self,
-        buf: FilePath | WriteBuffer[str],
+        buf: FilePath | WriteBuffer[_str],
         na_rep: _str = ...,
         float_format: FloatFormatType = ...,
         header: _bool = ...,
@@ -543,16 +548,14 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def to_json(
         self,
-        path_or_buf: FilePath | WriteBuffer[str],
+        path_or_buf: FilePath | WriteBuffer[_str],
         *,
         orient: Literal["records"],
         date_format: Literal["epoch", "iso"] | None = ...,
         double_precision: int = ...,
         force_ascii: _bool = ...,
         date_unit: TimeUnit = ...,
-        default_handler: (
-            Callable[[Any], _str | float | _bool | list | dict] | None
-        ) = ...,
+        default_handler: Callable[[Any], JSONSerializable] | None = ...,
         lines: Literal[True],
         compression: CompressionOptions = ...,
         index: _bool = ...,
@@ -569,9 +572,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         double_precision: int = ...,
         force_ascii: _bool = ...,
         date_unit: TimeUnit = ...,
-        default_handler: (
-            Callable[[Any], _str | float | _bool | list | dict] | None
-        ) = ...,
+        default_handler: Callable[[Any], JSONSerializable] | None = ...,
         lines: Literal[True],
         compression: CompressionOptions = ...,
         index: _bool = ...,
@@ -581,15 +582,13 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def to_json(
         self,
-        path_or_buf: FilePath | WriteBuffer[str] | WriteBuffer[bytes],
+        path_or_buf: FilePath | WriteBuffer[_str] | WriteBuffer[bytes],
         orient: JsonSeriesOrient | None = ...,
         date_format: Literal["epoch", "iso"] | None = ...,
         double_precision: int = ...,
         force_ascii: _bool = ...,
         date_unit: TimeUnit = ...,
-        default_handler: (
-            Callable[[Any], _str | float | _bool | list | dict] | None
-        ) = ...,
+        default_handler: Callable[[Any], JSONSerializable] | None = ...,
         lines: _bool = ...,
         compression: CompressionOptions = ...,
         index: _bool = ...,
@@ -605,9 +604,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         double_precision: int = ...,
         force_ascii: _bool = ...,
         date_unit: TimeUnit = ...,
-        default_handler: (
-            Callable[[Any], _str | float | _bool | list | dict] | None
-        ) = ...,
+        default_handler: Callable[[Any], JSONSerializable] | None = ...,
         lines: _bool = ...,
         compression: CompressionOptions = ...,
         index: _bool = ...,
@@ -615,7 +612,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         mode: Literal["w"] = ...,
     ) -> _str: ...
     def to_xarray(self) -> xr.DataArray: ...
-    def items(self) -> Iterable[tuple[Hashable, S1]]: ...
+    def items(self) -> Iterator[tuple[Hashable, S1]]: ...
     def keys(self) -> Index: ...
     @overload
     def to_dict(self, *, into: type[dict] = ...) -> dict[Any, S1]: ...
@@ -756,7 +753,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def drop_duplicates(
         self,
         *,
-        keep: NaPosition | Literal[False] = ...,
+        keep: DropKeep = ...,
         inplace: Literal[True],
         ignore_index: _bool = ...,
     ) -> None: ...
@@ -764,11 +761,11 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def drop_duplicates(
         self,
         *,
-        keep: NaPosition | Literal[False] = ...,
+        keep: DropKeep = ...,
         inplace: Literal[False] = ...,
         ignore_index: _bool = ...,
     ) -> Series[S1]: ...
-    def duplicated(self, keep: NaPosition | Literal[False] = ...) -> Series[_bool]: ...
+    def duplicated(self, keep: DropKeep = ...) -> Series[_bool]: ...
     def idxmax(
         self, axis: AxisIndex = ..., skipna: _bool = ..., *args: Any, **kwargs: Any
     ) -> int | _str: ...
@@ -806,7 +803,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def diff(self: Series[type], periods: int = ...) -> Never: ...
     @overload
-    def diff(self: Series[str], periods: int = ...) -> Never: ...
+    def diff(self: Series[_str], periods: int = ...) -> Never: ...
     @overload
     def diff(self, periods: int = ...) -> Series[float]: ...
     def autocorr(self, lag: int = ...) -> float: ...
@@ -851,6 +848,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         align_axis: AxisIndex,
         keep_shape: bool = ...,
         keep_equal: bool = ...,
+        result_names: Suffixes = ...,
     ) -> UnknownSeries: ...
     @overload
     def compare(
@@ -859,6 +857,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         align_axis: AxisColumn = ...,
         keep_shape: bool = ...,
         keep_equal: bool = ...,
+        result_names: Suffixes = ...,
     ) -> DataFrame: ...
     def combine(
         self, other: Series[S1], func: Callable, fill_value: Scalar | None = ...
@@ -875,7 +874,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         na_position: NaPosition = ...,
         ignore_index: _bool = ...,
         inplace: Literal[True],
-        key: Callable | None = ...,
+        key: ValueKeyFunc = ...,
     ) -> None: ...
     @overload
     def sort_values(
@@ -887,7 +886,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         na_position: NaPosition = ...,
         ignore_index: _bool = ...,
         inplace: Literal[False] = ...,
-        key: Callable | None = ...,
+        key: ValueKeyFunc = ...,
     ) -> Series[S1]: ...
     @overload
     def sort_index(
@@ -901,7 +900,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         sort_remaining: _bool = ...,
         ignore_index: _bool = ...,
         inplace: Literal[True],
-        key: Callable | None = ...,
+        key: IndexKeyFunc = ...,
     ) -> None: ...
     @overload
     def sort_index(
@@ -915,7 +914,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         sort_remaining: _bool = ...,
         ignore_index: _bool = ...,
         inplace: Literal[False] = ...,
-        key: Callable | None = ...,
+        key: IndexKeyFunc = ...,
     ) -> Series[S1]: ...
     def argsort(
         self,
@@ -924,10 +923,10 @@ class Series(IndexOpsMixin[S1], NDFrame):
         order: None = ...,
     ) -> Series[int]: ...
     def nlargest(
-        self, n: int = ..., keep: NaPosition | Literal["all"] = ...
+        self, n: int = ..., keep: NsmallestNlargestKeep = ...
     ) -> Series[S1]: ...
     def nsmallest(
-        self, n: int = ..., keep: NaPosition | Literal["all"] = ...
+        self, n: int = ..., keep: NsmallestNlargestKeep = ...
     ) -> Series[S1]: ...
     def swaplevel(
         self, i: Level = ..., j: Level = ..., copy: _bool = ...
@@ -1080,7 +1079,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def reindex_like(
         self,
         other: Series[S1],
-        method: _str | FillnaOptions | Literal["nearest"] | None = ...,
+        method: FillnaOptions | Literal["nearest"] | None = ...,
         copy: _bool = ...,
         limit: int | None = ...,
         tolerance: Scalar | AnyArrayLike | Sequence[Scalar] = ...,
@@ -1131,7 +1130,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def info(
         self,
         verbose: bool | None = ...,
-        buf: WriteBuffer[str] = ...,
+        buf: WriteBuffer[_str] | None = ...,
         memory_usage: bool | Literal["deep"] | None = ...,
         show_counts: bool | None = ...,
     ) -> None: ...
@@ -1153,7 +1152,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         *,
         axis: AxisIndex = ...,
         inplace: Literal[True],
-        how: Literal["any", "all"] | None = ...,
+        how: AnyAll | None = ...,
         ignore_index: _bool = ...,
     ) -> None: ...
     @overload
@@ -1162,13 +1161,13 @@ class Series(IndexOpsMixin[S1], NDFrame):
         *,
         axis: AxisIndex = ...,
         inplace: Literal[False] = ...,
-        how: Literal["any", "all"] | None = ...,
+        how: AnyAll | None = ...,
         ignore_index: _bool = ...,
     ) -> Series[S1]: ...
     def to_timestamp(
         self,
         freq=...,
-        how: TimestampConvention = ...,
+        how: ToTimestampHow = ...,
         copy: _bool = ...,
     ) -> Series[S1]: ...
     def to_period(self, freq: _str | None = ..., copy: _bool = ...) -> DataFrame: ...
@@ -1179,10 +1178,10 @@ class Series(IndexOpsMixin[S1], NDFrame):
         Self,
         DataFrame,
         Series[bool],
-        Series[list[str]],
+        Series[list[_str]],
         Series[int],
         Series[bytes],
-        Series[str],
+        Series[_str],
         Series[type[object]],
     ]: ...
     @property
@@ -1216,7 +1215,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def reindex(
         self,
         index: Axes | None = ...,
-        method: FillnaOptions | Literal["nearest"] | None = ...,
+        method: ReindexMethod | None = ...,
         copy: bool = ...,
         level: int | _str = ...,
         fill_value: Scalar | None = ...,
@@ -1539,7 +1538,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         axis: AxisIndex = ...,
         level: Level | None = ...,
         copy: _bool = ...,
-        ambiguous=...,
+        ambiguous: TimeAmbiguous = ...,
         nonexistent: _str = ...,
     ) -> Series[S1]: ...
     def abs(self) -> Series[S1]: ...
@@ -2336,6 +2335,13 @@ class TimedeltaSeries(Series[Timedelta]):
         **kwargs: Any,
     ) -> Timedelta: ...
     def diff(self, periods: int = ...) -> TimedeltaSeries: ...  # type: ignore[override] # pyright: ignore[reportIncompatibleMethodOverride]
+    def cumsum(
+        self,
+        axis: AxisIndex | None = ...,
+        skipna: _bool = ...,
+        *args: Any,
+        **kwargs: Any,
+    ) -> TimedeltaSeries: ...
 
 class PeriodSeries(Series[Period]):
     @property
