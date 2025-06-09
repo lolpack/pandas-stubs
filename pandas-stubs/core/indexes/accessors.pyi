@@ -205,7 +205,7 @@ _DTToPeriodReturnType = TypeVar(
     "_DTToPeriodReturnType", bound=PeriodSeries | PeriodIndex
 )
 
-class _DatetimeLikeNoTZMethods(
+class _DatetimeLikeNoTZMethods( #pyrefly: ignore
     _DatetimeRoundingMethods[_DTTimestampTimedeltaReturnType],
     Generic[
         _DTTimestampTimedeltaReturnType,
@@ -237,7 +237,7 @@ class _DatetimeNoTZProperties(
         _DTOtherOpsTimeReturnType,
         _DTFreqReturnType,
     ],
-    _DatetimeLikeNoTZMethods[
+    _DatetimeLikeNoTZMethods[ # pyrefly: ignore
         _DTTimestampTimedeltaReturnType,
         _DTNormalizeReturnType,
         _DTStrKindReturnType,

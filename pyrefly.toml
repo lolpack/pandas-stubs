@@ -1,0 +1,12 @@
+# pyrefly.toml
+
+project_includes = ["pandas"]
+
+[errors]
+# Todo support union of None
+internal-error = false
+# Todo support overrides
+not-a-type = false
+bad-override = false
+# Todo fix type alias
+type-alias-error = false
