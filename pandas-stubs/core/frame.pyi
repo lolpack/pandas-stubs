@@ -218,6 +218,7 @@ class _LocIndexerFrame(_LocIndexer, Generic[_T]):
             | Callable[[DataFrame], IndexType | MaskType | Sequence[Hashable]]
             | list[HashableT]
             | tuple[
+                # pyrefly: ignore  # not-a-type
                 IndexType
                 | MaskType
                 | list[HashableT]
@@ -246,6 +247,7 @@ class _LocIndexerFrame(_LocIndexer, Generic[_T]):
         idx: (
             Callable[[DataFrame], ScalarT]
             | tuple[
+                # pyrefly: ignore  # not-a-type
                 IndexType
                 | MaskType
                 | _IndexSliceTuple
@@ -264,6 +266,7 @@ class _LocIndexerFrame(_LocIndexer, Generic[_T]):
     def __setitem__(
         self,
         idx: (
+            # pyrefly: ignore  # not-a-type
             MaskType | StrLike | _IndexSliceTuple | list[ScalarT] | IndexingInt | slice
         ),
         value: (
@@ -1227,6 +1230,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     @overload
     def groupby(  # type: ignore[overload-overlap] # pyright: ignore reportOverlappingOverload
         self,
+        # pyrefly: ignore  # not-a-type
         by: MultiIndex | GroupByObjectNonScalar | None = ...,
         axis: AxisIndex | NoDefault = ...,
         level: IndexLabel | None = ...,
@@ -1239,6 +1243,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     @overload
     def groupby(  # type: ignore[overload-overlap]
         self,
+        # pyrefly: ignore  # not-a-type
         by: MultiIndex | GroupByObjectNonScalar | None = ...,
         axis: AxisIndex | NoDefault = ...,
         level: IndexLabel | None = ...,
@@ -1353,6 +1358,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     @overload
     def agg(
         self,
+        # pyrefly: ignore  # not-a-type
         func: list[AggFuncTypeBase] | AggFuncTypeDictFrame = ...,
         axis: Axis = ...,
         **kwargs: Any,
@@ -1367,6 +1373,7 @@ class DataFrame(NDFrame, OpsMixin, _GetItemHack):
     @overload
     def aggregate(
         self,
+        # pyrefly: ignore  # not-a-type
         func: list[AggFuncTypeBase] | AggFuncTypeDictFrame,
         axis: Axis = ...,
         **kwargs: Any,

@@ -25,8 +25,8 @@ type-alias-error = true
 matches = "pandas-stubs/core/series.pyi"
 
 [sub-config.errors]
-not-a-type = false
-invalid-overload = false
+not-a-type = true
+invalid-overload = true
 internal-error = false # Todo support union of None https://github.com/facebook/pyrefly/issues/162
 bad-override = false # `-stubs` issue
 
@@ -35,34 +35,27 @@ matches = "pandas-stubs/core/reshape/tile.pyi"
 
 [sub-config.errors]
 not-a-type = false
-internal-error = false # Todo support union of None https://github.com/facebook/pyrefly/issues/162
+internal-error = true # Todo support union of None https://github.com/facebook/pyrefly/issues/162
 
 [[sub-config]]
 matches = "pandas-stubs/core/frame.pyi"
 
 [sub-config.errors]
-not-a-type = false
+not-a-type = true
 internal-error = false # Todo support union of None https://github.com/facebook/pyrefly/issues/162
-
-[[sub-config]]
-matches = "pandas-stubs/core/indexes/accessors.pyi"
-
-[sub-config.errors]
-bad-specialization = false
-invalid-type-var = false
 
 [[sub-config]]
 matches = "pandas-stubs/core/indexes/multi.pyi" 
 
 [sub-config.errors]
-bad-specialization = false # pyright reportMissingTypeArgument
-bad-override = false # reportMissingParameterType
+bad-specialization = true # pyright reportMissingTypeArgument
+bad-override = true # reportMissingParameterType
 
 [[sub-config]]
 matches = "pandas-stubs/core/indexing.pyi"
 
 [sub-config.errors]
-type-alias-error = false # reportMissingTypeArgument
+type-alias-error = true # reportMissingTypeArgument
 
 [[sub-config]] # reportUnknownParameterType
 matches = "pandas-stubs/core/arrays/datetimelike.pyi"
@@ -74,25 +67,25 @@ bad-override = false
 matches = "pandas-stubs/core/computation/eval.pyi"
 
 [sub-config.errors]
-not-a-type = false
+not-a-type = true
 
 [[sub-config]] # reportUnknownParameterType
 matches = "pandas-stubs/core/window/ewm.pyi"
 
 [sub-config.errors]
-bad-override = false
+bad-override = true
 
 [[sub-config]] # reportMissingTypeArgument
 matches = "pandas-stubs/core/indexes/range.pyi"
 
 [sub-config.errors]
-bad-override = false
+bad-override = true
 
 [[sub-config]] # reportIncompatibleVariableOverride
 matches = "pandas-stubs/core/resample.pyi"
 
 [sub-config.errors]
-bad-override = false
+bad-override = true
 
 # Pyrefly bug
 [[sub-config]]
@@ -120,6 +113,13 @@ matches = "pandas-stubs/core/indexes/base.pyi"
 
 [sub-config.errors]
 invalid-overload = false
+
+[[sub-config]]
+matches = "pandas-stubs/core/indexes/accessors.pyi"
+
+[sub-config.errors]
+bad-specialization = false
+invalid-type-var = false
 
 
 # result of `-stubs` issue
