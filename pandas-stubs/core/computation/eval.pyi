@@ -25,4 +25,5 @@ def eval(
     level: int = ...,
     target: object | None = ...,
     inplace: bool = ...,
+# pyrefly: ignore  # not-a-type
 ) -> npt.NDArray | Scalar | DataFrame | Series | None: ...

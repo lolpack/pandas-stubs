@@ -15,6 +15,7 @@ _IndexSliceTuple: TypeAlias = tuple[
     Index | MaskType | Scalar | list[ScalarT] | slice | tuple[Scalar, ...], ...
 ]
 
+# pyrefly: ignore  # type-alias-error
 _IndexSliceUnion: TypeAlias = slice | _IndexSliceTuple
 
 _IndexSliceUnionT = TypeVar("_IndexSliceUnionT", bound=_IndexSliceUnion)

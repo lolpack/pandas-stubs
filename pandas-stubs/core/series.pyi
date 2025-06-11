@@ -212,6 +212,7 @@ class _LocIndexerSeries(_LocIndexer, Generic[S1]):
     def __getitem__(
         self,
         idx: (
+            # pyrefly: ignore  # not-a-type
             MaskType
             | Index
             | SequenceNotStr[float | _str | Timestamp]
@@ -238,6 +239,7 @@ class _LocIndexerSeries(_LocIndexer, Generic[S1]):
     @overload
     def __setitem__(
         self,
+        # pyrefly: ignore  # not-a-type
         idx: MaskType | StrLike | _IndexSliceTuple | list[ScalarT],
         value: S1 | ArrayLike | Series[S1] | None,
     ) -> None: ...
@@ -425,6 +427,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def hasnans(self) -> bool: ...
     def div(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -684,6 +687,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def groupby(
         self,
+        # pyrefly: ignore  # not-a-type
         by: MultiIndex | GroupByObjectNonScalar,
         axis: AxisIndex = ...,
         level: IndexLabel | None = ...,
@@ -992,6 +996,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def transform(
         self,
+        # pyrefly: ignore  # not-a-type
         func: list[AggFuncTypeBase] | AggFuncTypeDictFrame,
         axis: AxisIndex = ...,
         *args: Any,
@@ -1236,6 +1241,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         n: int | None = ...,
         frac: float | None = ...,
         replace: _bool = ...,
+        # pyrefly: ignore  # not-a-type
         weights: _str | _ListLike | np.ndarray | None = ...,
         random_state: RandomState | None = ...,
         axis: AxisIndex | None = ...,
@@ -1456,6 +1462,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
         level: Level | None = ...,
     ) -> None: ...
     @overload
+    # pyrefly: ignore  # invalid-overload
     def where(
         self,
         cond: (
@@ -1589,6 +1596,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def __add__(
         self,
         other: (
+            # pyrefly: ignore  # not-a-type
             num
             | _str
             | timedelta
@@ -1606,6 +1614,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def __and__(self, other: int | np_ndarray_anyint | Series[int]) -> Series[int]: ...
     # def __array__(self, dtype: Optional[_bool] = ...) -> _np_ndarray
+    # pyrefly: ignore  # not-a-type
     def __div__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...
     def __eq__(self, other: object) -> Series[_bool]: ...  # type: ignore[override] # pyright: ignore[reportIncompatibleMethodOverride]
     def __floordiv__(self, other: num | _ListLike | Series[S1]) -> Series[int]: ...
@@ -1626,7 +1635,9 @@ class Series(IndexOpsMixin[S1], NDFrame):
         self, other: timedelta | Timedelta | TimedeltaSeries | np.timedelta64
     ) -> TimedeltaSeries: ...
     @overload
+    # pyrefly: ignore  # not-a-type
     def __mul__(self, other: num | _ListLike | UnknownSeries) -> UnknownSeries: ...
+    # pyrefly: ignore  # not-a-type
     def __mod__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...
     def __ne__(self, other: object) -> Series[_bool]: ...  # type: ignore[override] # pyright: ignore[reportIncompatibleMethodOverride]
     def __pow__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...
@@ -1641,6 +1652,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def __radd__(self, other: S1 | Series[S1]) -> Self: ...
     @overload
     def __radd__(
+        # pyrefly: ignore  # not-a-type
         self, other: num | _str | _ListLike | UnknownSeries
     ) -> UnknownSeries: ...
     # ignore needed for mypy as we want different results based on the arguments
@@ -1650,17 +1662,22 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> Series[bool]: ...
     @overload
     def __rand__(self, other: int | np_ndarray_anyint | Series[int]) -> Series[int]: ...
+    # pyrefly: ignore  # not-a-type
     def __rdiv__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...
     def __rdivmod__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...  # type: ignore[override] # pyright: ignore[reportIncompatibleMethodOverride]
     def __rfloordiv__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...
+    # pyrefly: ignore  # not-a-type
     def __rmod__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...
     @overload
     def __rmul__(
         self, other: timedelta | Timedelta | TimedeltaSeries | np.timedelta64
     ) -> TimedeltaSeries: ...
     @overload
+    # pyrefly: ignore  # not-a-type
     def __rmul__(self, other: num | _ListLike | UnknownSeries) -> UnknownSeries: ...
+    # pyrefly: ignore  # not-a-type
     def __rnatmul__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...
+    # pyrefly: ignore  # not-a-type
     def __rpow__(self, other: num | _ListLike | Series[S1]) -> Series[S1]: ...
     # ignore needed for mypy as we want different results based on the arguments
     @overload  # type: ignore[override]
@@ -1669,8 +1686,10 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> Series[bool]: ...
     @overload
     def __ror__(self, other: int | np_ndarray_anyint | Series[int]) -> Series[int]: ...
+    # pyrefly: ignore  # not-a-type
     def __rsub__(self, other: num | _ListLike | Series[S1]) -> UnknownSeries: ...
     def __rtruediv__(
+        # pyrefly: ignore  # not-a-type
         self, other: num | _ListLike | Series[S1] | Path
     ) -> UnknownSeries: ...
     # ignore needed for mypy as we want different results based on the arguments
@@ -1695,8 +1714,10 @@ class Series(IndexOpsMixin[S1], NDFrame):
         self, other: Timestamp | datetime | TimestampSeries
     ) -> TimedeltaSeries: ...
     @overload
+    # pyrefly: ignore  # not-a-type
     def __sub__(self, other: num | _ListLike | UnknownSeries) -> UnknownSeries: ...
     def __truediv__(
+        # pyrefly: ignore  # not-a-type
         self, other: num | _ListLike | Series[S1] | Path
     ) -> UnknownSeries: ...
     # ignore needed for mypy as we want different results based on the arguments
@@ -1773,6 +1794,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> Series[S1]: ...
     def divide(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -1780,6 +1802,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> Series[float]: ...
     def divmod(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -1809,6 +1832,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> Expanding[UnknownSeries]: ...
     def floordiv(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -1893,6 +1917,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> S1: ...
     def mod(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -1909,6 +1934,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def mul(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | UnknownSeries,
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -1916,6 +1942,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> UnknownSeries: ...
     def multiply(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -1931,6 +1958,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     def nunique(self, dropna: _bool = ...) -> int: ...
     def pow(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -1993,6 +2021,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     @overload
     def rmul(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | UnknownSeries,
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -2073,6 +2102,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> float: ...
     def sub(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
@@ -2080,6 +2110,7 @@ class Series(IndexOpsMixin[S1], NDFrame):
     ) -> Series[S1]: ...
     def subtract(
         self,
+        # pyrefly: ignore  # not-a-type
         other: num | _ListLike | Series[S1],
         level: Level | None = ...,
         fill_value: float | None = ...,
