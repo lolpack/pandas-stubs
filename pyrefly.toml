@@ -1,18 +1,152 @@
 # pyrefly.toml
 
-project_includes = ["pandas"]
+project_includes = ["pandas-stubs", "tests"]
 
-# untyped-def-behavior = "check-and-infer-return-any"
+# TODO: re-enable return type inference once perf improvements land
+untyped-def-behavior = "check-and-infer-return-any"
 
 site_package_path = [
   ".venv/lib/python3.12/site-packages/"
 ]
 
+# TODO: fix bug where missing `-stubs` doesn't find the files
+search-path =  ["pandas-stubs"]
+
+# Global errors that we should test
 [errors]
-# Todo support union of None
+# Todo support union of None https://github.com/facebook/pyrefly/issues/162
 internal-error = false
-# Todo support overrides
+# Recursive type alias
+type-alias-error = true
+
+
+# Pyright in strict mode also agrees that these are errors
+[[sub-config]] # reportMissingTypeArgument
+matches = "pandas-stubs/core/series.pyi"
+
+[sub-config.errors]
 not-a-type = false
+invalid-overload = false
+internal-error = false # Todo support union of None https://github.com/facebook/pyrefly/issues/162
+bad-override = false # `-stubs` issue
+
+[[sub-config]]
+matches = "pandas-stubs/core/reshape/tile.pyi"
+
+[sub-config.errors]
+not-a-type = false
+internal-error = false # Todo support union of None https://github.com/facebook/pyrefly/issues/162
+
+[[sub-config]]
+matches = "pandas-stubs/core/frame.pyi"
+
+[sub-config.errors]
+not-a-type = false
+internal-error = false # Todo support union of None https://github.com/facebook/pyrefly/issues/162
+
+[[sub-config]]
+matches = "pandas-stubs/core/indexes/accessors.pyi"
+
+[sub-config.errors]
+bad-specialization = false
+invalid-type-var = false
+
+[[sub-config]]
+matches = "pandas-stubs/core/indexes/multi.pyi" 
+
+[sub-config.errors]
+bad-specialization = false # pyright reportMissingTypeArgument
+bad-override = false # reportMissingParameterType
+
+[[sub-config]]
+matches = "pandas-stubs/core/indexing.pyi"
+
+[sub-config.errors]
+type-alias-error = false # reportMissingTypeArgument
+
+[[sub-config]] # reportUnknownParameterType
+matches = "pandas-stubs/core/arrays/datetimelike.pyi"
+
+[sub-config.errors]
 bad-override = false
-# Todo fix type alias
+
+[[sub-config]] # reportMissingTypeArgument reportMissingTypeArgument
+matches = "pandas-stubs/core/computation/eval.pyi"
+
+[sub-config.errors]
+not-a-type = false
+
+[[sub-config]] # reportUnknownParameterType
+matches = "pandas-stubs/core/window/ewm.pyi"
+
+[sub-config.errors]
+bad-override = false
+
+[[sub-config]] # reportMissingTypeArgument
+matches = "pandas-stubs/core/indexes/range.pyi"
+
+[sub-config.errors]
+bad-override = false
+
+[[sub-config]] # reportIncompatibleVariableOverride
+matches = "pandas-stubs/core/resample.pyi"
+
+[sub-config.errors]
+bad-override = false
+
+# Pyrefly bug
+[[sub-config]]
+matches = "pandas-stubs/_libs/tslibs/timestamps.pyi" 
+
+[sub-config.errors]
+bad-override = false
+
+[[sub-config]]
+matches = "pandas-stubs/io/formats/style.pyi" 
+
+[sub-config.errors]
+not-a-type = false
+internal-error = false # Todo support union of None https://github.com/facebook/pyrefly/issues/162
+
+[[sub-config]]
+matches = "pandas-stubs/io/excel/_base.pyi" 
+
+[sub-config.errors]
+not-a-type = false
+internal-error = false # Todo support union of None https://github.com/facebook/pyrefly/issues/162
+
+[[sub-config]]
+matches = "pandas-stubs/core/indexes/base.pyi" 
+
+[sub-config.errors]
+invalid-overload = false
+
+
+# result of `-stubs` issue
+[[sub-config]]
+matches = "pandas-stubs/_typing.pyi" 
+
+[sub-config.errors]
 type-alias-error = false
+internal-error = false
+
+[[sub-config]]
+matches = "pandas-stubs/io/stata.pyi" 
+
+[sub-config.errors]
+missing-module-attribute = false
+
+# `Tests` is quite noisy
+[[sub-config]]
+matches = "tests" 
+
+[sub-config.errors]
+assert-type = false
+missing-attribute = false
+bad-argument-type = false
+no-matching-overload = false
+not-iterable = false
+not-callable = false
+bad-assignment = false
+bad-return = false
+unknown = false
